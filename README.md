@@ -1,86 +1,105 @@
-# 📝 Console Text Editor with Undo (Stack-Based)
+# 🏦 Banking System with Custom Exception Handling in Java
 
-A lightweight, interactive console-based text editor built in Java demonstrating the **Stack** data structure (`java.util.Stack`) and the **Last-In, First-Out (LIFO)** principle to implement a complete state history and multi-level **Undo** system.
+A robust, console-based Banking System application implemented in Java, illustrating **Object-Oriented Programming (OOP)**, strict **data encapsulation**, **in-memory data structures**, and **custom checked exception hierarchies** for resilient error handling.
 
 ---
 
 ## 🚀 Features
 
-- **✍️ Type Text**:
-  - Appends new characters or phrases to the current document string.
-  - Automatically preserves the preceding text state by pushing it onto the history stack before applying changes.
-- **↩️ Multi-Level Undo**:
-  - Reverts the most recent text modification by popping the previous snapshot from the stack.
-  - Supports continuous sequential undo operations back to the initial blank state.
-  - Gracefully detects and handles an empty history stack when no actions remain to undo.
-- **📄 Display Current Text**:
-  - Shows the real-time buffer content currently stored in the editor.
-- **🚪 Graceful Exit**:
-  - Safely closes standard I/O resources (`Scanner`) and terminates execution cleanly.
+- **👤 Account Creation & Management**:
+  - Registers accounts with a unique account number, holder name, and non-negative initial deposit.
+  - Guards against duplicate account numbers using hash map key lookups.
+- **💵 Deposit Operations**:
+  - Deposits funds safely while validating amounts against non-positive and non-finite values (`NaN`, infinity).
+- **💳 Withdrawal Operations**:
+  - Verifies available funds before debiting to prevent overdrafts.
+- **🔄 Account-to-Account Transfers**:
+  - Validates both accounts and ensures sender has sufficient funds.
+  - Enforces order of operations (withdraw from sender first, deposit into receiver).
+  - Blocks self-transfers (`sender == receiver`).
+- **📊 Balance & Account Inquiries**:
+  - Displays formatted account details and balances.
+- **🛡️ Custom Exception Handling**:
+  - Implements tailored checked exception classes providing descriptive error messages without crashing the application.
 
 ---
 
 ## 🛠️ Technologies & Concepts
 
 - **Language**: Java (JDK 8 or higher)
-- **Data Structure**: `java.util.Stack<String>` (LIFO history stack)
-- **I/O Handling**: `java.util.Scanner` for reading console input lines and numbers
-- **Design Pattern**: Memento / Snapshot-based state management using an in-memory stack
+- **Data Structure**: `java.util.Map<Integer, Account>` backed by `java.util.HashMap` for $O(1)$ average time complexity lookups
+- **OOP Principles**: Encapsulation, custom exception handling, multi-catch exception blocks, validation guards
+- **Data Types**: `double` with `Double.isFinite(amount)` safety validation
 
 ---
 
 ## 📂 Project Structure
 
 ```text
-├── TextEditor.java    # Core application source code with CLI loop and Stack undo logic
-├── README.md          # Project documentation and usage guide
-└── .gitignore         # Ignores compiled Java bytecode (*.class)
+├── BankingSystem.java   # Core system containing Account model, custom exceptions, and BankingSystem service
+├── README.md            # Comprehensive project documentation
+└── .gitignore           # Ignores compiled Java bytecode (*.class)
 ```
 
 ---
 
 ## 🏗️ Architecture & Component Overview
 
-The application logic resides in [`TextEditor.java`](file:///c:/Users/sivas/OneDrive/Desktop/java%20intership/TextEditor.java):
+All core components are encapsulated in [`BankingSystem.java`](file:///c:/Users/sivas/OneDrive/Desktop/java%20intership/BankingSystem.java):
 
 | Component | Type | Description |
 | :--- | :--- | :--- |
-| [`TextEditor`](file:///c:/Users/sivas/OneDrive/Desktop/java%20intership/TextEditor.java#L4-L52) | Class | Main program class containing the text buffer, history stack, and user interface. |
-| [`main(String[] args)`](file:///c:/Users/sivas/OneDrive/Desktop/java%20intership/TextEditor.java#L5-L51) | Method | Entry point driving the menu loop, user input collection, and state transitions. |
-| `history` (`Stack<String>`) | Data Member | Stores past document snapshots for LIFO retrieval on undo requests. |
-| `text` (`String`) | Working Buffer | Maintains the current active string state displayed to the user. |
+| [`Account`](file:///c:/Users/sivas/OneDrive/Desktop/java%20intership/BankingSystem.java#L26-L98) | Model Class | Encapsulates account number, holder name, and balance with internal mutation controls. |
+| [`BankingSystem`](file:///c:/Users/sivas/OneDrive/Desktop/java%20intership/BankingSystem.java#L101-L237) | Service / Controller | Manages the repository of accounts (`Map<Integer, Account>`) and orchestrates banking transactions. |
+| [`InsufficientBalanceException`](file:///c:/Users/sivas/OneDrive/Desktop/java%20intership/BankingSystem.java#L5-L9) | Custom Checked Exception | Thrown when withdrawal or transfer exceeds the account balance. |
+| [`InvalidAccountException`](file:///c:/Users/sivas/OneDrive/Desktop/java%20intership/BankingSystem.java#L12-L16) | Custom Checked Exception | Thrown when an account cannot be found or an account number already exists. |
+| [`InvalidTransactionAmountException`](file:///c:/Users/sivas/OneDrive/Desktop/java%20intership/BankingSystem.java#L19-L23) | Custom Checked Exception | Thrown when an amount is negative, zero, or non-finite (`Double.NaN` / Infinity). |
 
 ---
 
-## 🔄 How the Undo Mechanism Works
-
-The editor uses a **Snapshot State Pattern** powered by `Stack<E>`:
+## 🛡️ Custom Exception Hierarchy
 
 ```text
- [ Initial: "" ]
-       │
-       ▼  User types "Hello" -> history.push("")
- [ Stack: [""] ]               -> text = "Hello"
-       │
-       ▼  User types " World" -> history.push("Hello")
- [ Stack: ["", "Hello"] ]      -> text = "Hello World"
-       │
-       ▼  User chooses Undo -> text = history.pop()
- [ Stack: [""] ]               -> text = "Hello"
-       │
-       ▼  User chooses Undo -> text = history.pop()
- [ Stack: [] ]                 -> text = ""
-       │
-       ▼  User chooses Undo -> history.isEmpty() == true ("Nothing to undo!")
+java.lang.Throwable
+   └── java.lang.Exception
+         ├── InsufficientBalanceException
+         ├── InvalidAccountException
+         └── InvalidTransactionAmountException
 ```
 
-### Stack Operations Summary
+### Exception Scenarios
 
-| Action | Stack Method | Time Complexity | State Impact |
-| :--- | :--- | :--- | :--- |
-| **Type text** | `history.push(text)` | $O(1)$ amortized | Pushes prior document snapshot onto top of stack before appending input. |
-| **Undo** | `history.pop()` | $O(1)$ | Removes and returns the top snapshot, restoring `text` to its previous state. |
-| **Check Undoable** | `history.isEmpty()` | $O(1)$ | Checks if any past states exist before attempting pop. |
+| Exception | Trigger Condition | Example Error Message |
+| :--- | :--- | :--- |
+| `InsufficientBalanceException` | `amount > balance` | `Insufficient balance. Available: 5000.0` |
+| `InvalidAccountException` | Account ID not present in map or duplicate ID registered | `Account 999 does not exist.` / `Account number already exists.` |
+| `InvalidTransactionAmountException` | `!Double.isFinite(amount) || amount <= 0` | `Transaction amount must be positive and finite.` |
+
+---
+
+## 🔄 Transaction Flow & Safety
+
+```text
+[ Transfer Request: Account 101 -> Account 102 ($500) ]
+                       │
+                       ▼
+             Validate amount > 0 & isFinite
+                       │
+                       ▼
+          Lookup sender & receiver accounts
+                       │
+                       ▼
+        Verify sender != receiver (not same account)
+                       │
+                       ▼
+       Sender.withdraw($500) [Checks balance >= 500]
+                       │
+                       ▼
+             Receiver.deposit($500)
+                       │
+                       ▼
+              [Transfer Complete]
+```
 
 ---
 
@@ -88,7 +107,7 @@ The editor uses a **Snapshot State Pattern** powered by `Stack<E>`:
 
 ### Prerequisites
 
-Verify that the Java Development Kit (JDK) is installed and available in your environment:
+Verify that the Java Development Kit (JDK) is installed and accessible in your environment:
 
 ```powershell
 javac -version
@@ -97,117 +116,68 @@ java -version
 
 ### Compilation
 
-Compile [`TextEditor.java`](file:///c:/Users/sivas/OneDrive/Desktop/java%20intership/TextEditor.java) using `javac`:
+Compile [`BankingSystem.java`](file:///c:/Users/sivas/OneDrive/Desktop/java%20intership/BankingSystem.java) using `javac`:
 
 ```powershell
-javac TextEditor.java
+javac BankingSystem.java
 ```
-
-This will produce the compiled bytecode file `TextEditor.class`.
 
 ### Execution
 
-Run the compiled class:
+Run the application:
 
 ```powershell
-java TextEditor
+java BankingSystem
 ```
 
 ---
 
-## 🎮 Interactive Menu & Usage
+## 📋 Sample Output
 
-Upon launch, the application displays an interactive terminal menu:
-
-```text
---- Text Editor ---
-1. Type text
-2. Undo
-3. Display text
-4. Exit
-Enter choice: 
-```
-
-### Step-by-Step Sample Session
+Running the demo routine in [`BankingSystem.main`](file:///c:/Users/sivas/OneDrive/Desktop/java%20intership/BankingSystem.java#L186-L236) yields:
 
 ```text
---- Text Editor ---
-1. Type text
-2. Undo
-3. Display text
-4. Exit
-Enter choice: 1
-Enter text to add: Hello 
-Text added successfully.
+Account created successfully.
+Account created successfully.
 
---- Text Editor ---
-1. Type text
-2. Undo
-3. Display text
-4. Exit
-Enter choice: 1
-Enter text to add: World!
-Text added successfully.
+--- Deposit ---
+Deposit successful.
 
---- Text Editor ---
-1. Type text
-2. Undo
-3. Display text
-4. Exit
-Enter choice: 3
-Current text: Hello World!
+--- Withdrawal ---
+Withdrawal successful.
 
---- Text Editor ---
-1. Type text
-2. Undo
-3. Display text
-4. Exit
-Enter choice: 2
-Last change undone.
+--- Transfer ---
+Withdrawal successful.
+Deposit successful.
+Transfer successful.
 
---- Text Editor ---
-1. Type text
-2. Undo
-3. Display text
-4. Exit
-Enter choice: 3
-Current text: Hello 
+--- Account Details ---
+Account Number: 101
+Account Holder: Siva
+Balance: 5000.00
 
---- Text Editor ---
-1. Type text
-2. Undo
-3. Display text
-4. Exit
-Enter choice: 2
-Last change undone.
+Account Number: 102
+Account Holder: Ravi
+Balance: 2500.00
 
---- Text Editor ---
-1. Type text
-2. Undo
-3. Display text
-4. Exit
-Enter choice: 2
-Nothing to undo!
-
---- Text Editor ---
-1. Type text
-2. Undo
-3. Display text
-4. Exit
-Enter choice: 4
-Exiting editor...
+--- Error Handling Tests ---
+Error: Insufficient balance. Available: 5000.0
+Error: Account 999 does not exist.
+Error: Transaction amount must be positive and finite.
 ```
 
 ---
 
 ## 🛡️ Edge Cases Handled
 
-- **Empty History Stack**: If option `2` (Undo) is selected when no edits have been made (or all edits were already undone), `history.isEmpty()` triggers `"Nothing to undo!"` instead of throwing an `EmptyStackException`.
-- **Spacing and Blank Entries**: `sc.nextLine()` preserves full strings, including spaces and punctuation.
-- **Unrecognized Menu Choices**: The `default` branch in the `switch` statement alerts the user (`"Invalid choice!"`) on invalid numerical selections without terminating the application.
+1. **Negative Initial Balance**: Attempting to initialize an account with `initialBalance < 0` triggers `InvalidTransactionAmountException`.
+2. **Duplicate Account Number**: Creating an account with an existing account ID fails with `InvalidAccountException`.
+3. **Overdraft Prevention**: Checking `amount > balance` prevents negative balances.
+4. **Non-Finite Floating Point Numbers**: Protects calculations against `Double.NaN`, `Double.POSITIVE_INFINITY`, and `Double.NEGATIVE_INFINITY`.
+5. **Self-Transfer Guard**: Transferring funds from an account to itself is blocked with an informative exception.
 
 ---
 
-## 📄 License & Notes
+## 📄 Notes
 
-Developed as part of the Java Internship practical curriculum.
+Developed as part of the Java Internship practical assignments.
